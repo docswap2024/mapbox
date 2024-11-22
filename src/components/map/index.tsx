@@ -1,7 +1,7 @@
 "use client"
 
 import mapboxgl, { LngLatLike } from 'mapbox-gl';
-import React, { useEffect, useState, useRef, Fragment } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
@@ -20,7 +20,6 @@ interface MapboxMapProps {
     style?: string; // Map style
     center?: [number, number]; // Initial center [lng, lat]
     zoom?: number; // Initial zoom level
-    markers?: Array<{ lng: number; lat: number; popupText?: string }>; // Markers with optional popups
     height?: string; // Map height (e.g., '400px')
     width?: string; // Map width (e.g., '100%')
 }
@@ -33,7 +32,6 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
     style = 'mapbox://styles/nmandiveyi/ckwmqtgv305f514mnn23k7yax',
     center = [-123.152797, 49.699331],
     zoom = 16,
-    markers = [],
     height = '400px',
     width = '100%',
   }) => {
@@ -42,10 +40,10 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
     const [cardImage, setCardImage] = useState<any>(null);
     const strataPopupRef = useRef<HTMLDivElement | null>(null);
     const popupRef = useRef<HTMLDivElement | null>(null);
-    const [propertyType, setPropertyType] = useState<any>(null);
+    // const [propertyType, setPropertyType] = useState<any>(null);
 
-    var markerHeight = 50, markerRadius = 10, linearOffset = 25;
-    var popupOffsets: mapboxgl.PopupOptions['offset'] = {
+    const markerHeight = 50, markerRadius = 10, linearOffset = 25;
+    const popupOffsets: mapboxgl.PopupOptions['offset'] = {
       'top': [0, 0],
       'top-left': [0, 0],
       'top-right': [0, 0],
@@ -108,7 +106,7 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
         const latitude = position.coords.latitude;
         const longitude = position.coords.longitude;
       
-        const marker = new mapboxgl.Marker()
+        new mapboxgl.Marker()
           .setLngLat([longitude, latitude])
           .addTo(map);
       
@@ -118,12 +116,12 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
     }
 
     const getPopUp = (data: any) => {
-        var civic_address = data.CivicAddress.Value.split(' ')
+        const civic_address = data.CivicAddress.Value.split(' ')
         civic_address[1] = civic_address[1][0].toUpperCase() + civic_address[1].slice(1).toLowerCase()
         setProperty(data);
         
-        var bucket = 'https://sr-webimages-002.s3.us-west-2.amazonaws.com/Streetview/'
-        var card_image = bucket + civic_address[1] + '/card/' + civic_address[0] + '-' + civic_address[1] + '.jpg'
+        const bucket = 'https://sr-webimages-002.s3.us-west-2.amazonaws.com/Streetview/'
+        const card_image = bucket + civic_address[1] + '/card/' + civic_address[0] + '-' + civic_address[1] + '.jpg'
   
         fetchImage(card_image)
         .then(result => {
@@ -391,17 +389,17 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
         
         if(e.features[0].properties.CLASS === 'Building Strata') {
             getPropertyData(raw_pid, 'strata');
-            setPropertyType('strata');
+            // setPropertyType('strata');
         } else {
             getPropertyData(raw_pid, 'detached');
-            setPropertyType('detached');
+            // setPropertyType('detached');
         }
             
-        var feature = map.queryRenderedFeatures(e.point, {
+        const feature = map.queryRenderedFeatures(e.point, {
           layers: ['parcels-fill']
         });
 
-        var filter = feature.reduce(
+        const filter = feature.reduce(
           function (memo, feature) {
             memo.push(feature.properties.OBJECTID);
             return memo;
@@ -425,7 +423,7 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
   
       // Clean up on unmount
       // return () => map.remove();
-    }, []);
+    });
   
   
     return (

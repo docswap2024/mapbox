@@ -5,7 +5,7 @@ import { sliceAddress } from '@/utils';
 
 
 interface StrataMenuProps {
-    strataProperties: Array<any>; // Replace `any` with the appropriate type for a property
+    strataProperties: Array<any>; 
 }
 
 const StrataMenu: React.FC<StrataMenuProps> = ({ strataProperties }) => (
