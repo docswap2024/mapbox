@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
 
-export async function GET(
-  req: NextRequest,
-  { params } : { params: { GISID: string } }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ GISID: string }> }) {
+  const params = await props.params;
   console.log(`GET /api/property/strata/getStrataWithGISID/${params.GISID}`);
   const gisid = params.GISID;
   if (!gisid) {
