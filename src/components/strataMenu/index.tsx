@@ -5,10 +5,12 @@ import { sliceAddress } from '@/utils';
 
 
 interface StrataMenuProps {
-    strataProperties: Array<any>; 
+    strataProperties: Array<any>; // Replace `any` with the appropriate type for a property
+    setProperty: (property: any) => void; // Replace `any` with the appropriate type for a property
+    handleButtonClick: () => void;
 }
 
-const StrataMenu: React.FC<StrataMenuProps> = ({ strataProperties }) => (
+const StrataMenu: React.FC<StrataMenuProps> = ({ strataProperties, setProperty, handleButtonClick }) => (
     <Menu as="div" className="relative inline-block text-left w-full">
         <div>
             <MenuButton className="inline-flex flex justify-between w-full rounded-md bg-white px-3 py-2 text-sm font-semibold text-brandDarker shadow-sm ring-1 ring-inset ring-grayLight hover:bg-grayLight">
@@ -40,9 +42,9 @@ const StrataMenu: React.FC<StrataMenuProps> = ({ strataProperties }) => (
                         <div
                             className=' data-[focus]:bg-grayLight  data-[focus]:text-gray text-brandDarker block px-4 py-2 text-sm '
                             onClick={() => {
-                            // handleButtonClick();
+                            handleButtonClick();
                             // addView(property.PID.Value)
-                            // setStrataProperty(property);
+                            setProperty(property);
                             }}
                         >
                             {sliceAddress(property.CivicAddress.Value)}

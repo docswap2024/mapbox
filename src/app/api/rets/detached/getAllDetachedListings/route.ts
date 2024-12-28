@@ -1,16 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
 
-export async function GET(req: NextRequest, props: { params: Promise<{ PID: string }> }) {
-  const params = await props.params;
-  console.log(`GET /api/property/parcels/getParcelWithPID/${params.PID}`);
-  const pid = params.PID;
-  if (!pid) {
-    return new NextResponse("PID is required", { status: 400 });
-  }
-
+export async function GET(
+  req: NextRequest
+) {
+  console.log(`GET /api/rets/detached/getAllDetachedListings`);
   try {
-    const apiUrl = `${process.env.API_GATEWAY_URL_PROD}/parcels/getParcel?PID=${pid}`;
+    const apiUrl = `${process.env.API_GATEWAY_URL_PROD}/retsDetached/getAllDetachedListings`;
     const { data } = await axios.get(apiUrl);
     return new NextResponse(JSON.stringify(data), {
       status: 200,

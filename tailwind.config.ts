@@ -11,13 +11,18 @@ export default {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        aqua: '#0ec6d5',
         brandDarker: '#2e3f6e',
         brandDark: '#3d528b',
         gray: '#566985',
         grayLight: '#F6F6F6',
-
+        orange: '#ff6935',
+        red: {
+          DEFAULT: '#8b0000',
+          200: '#C51104'
+        },
       },
     },
   },
-  plugins: [],
+  plugins: [require("daisyui")],
 } satisfies Config;
