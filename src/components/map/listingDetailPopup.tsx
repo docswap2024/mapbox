@@ -4,7 +4,6 @@ import React, {useState, useEffect} from 'react';
 import {styles} from './propertyDetailsStyle';
 import {FaWindowClose} from 'react-icons/fa';
 import { ListingDetail } from './listingDetail';
-import {UserIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/solid';
 import { useRouter } from 'next/navigation';
 import { formatString } from '@/utils';
 

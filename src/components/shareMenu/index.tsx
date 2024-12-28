@@ -4,7 +4,6 @@ import {ShareIcon} from '@heroicons/react/24/solid';
 import {styles} from './styles';
 import Link from 'next/link';
 import {FaPinterest,  FaFacebook, FaGoogle, FaLinkedinIn, FaCopy, FaPrint} from 'react-icons/fa';
-import axios from 'axios';
 import { usePrint } from '@/context/printContext';
 
 export const ShareMenu = ({url}) => {

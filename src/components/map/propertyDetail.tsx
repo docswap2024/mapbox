@@ -4,13 +4,10 @@ import Image from 'next/image';
 import React, {useState, useRef, useEffect} from 'react';
 import {styles} from './propertyDetailsStyle';
 import {Tabs, Tab, LastSold, Photos, NearbyPhotos, BCAssessment, Taxes, SchoolPrograms, NewListings, RecentSolds, FloorPlans, HonestDoorPriceChart} from './helperComponents';
-import {FaArrowLeft, FaBed, FaBath, FaArrowsAlt, FaClock, FaLandmark, FaDollarSign, FaRegChartBar, FaCommentDollar, FaBriefcase, FaHome, FaInfo, FaImage, FaChartLine, FaSchool, FaEllipsisV, FaExclamationTriangle, FaCommentAlt, FaMoneyCheckAlt } from 'react-icons/fa';
+import {FaArrowLeft, FaBed, FaBath, FaArrowsAlt, FaClock, FaLandmark, FaDollarSign, FaRegChartBar, FaCommentDollar, FaBriefcase, FaHome, FaInfo, FaImage, FaChartLine, FaSchool, FaMoneyCheckAlt } from 'react-icons/fa';
 import HDWidgetComponent from './HDWidgetComponent';
 import HDMyHomeWidgetComponent from './HDMyHomeWidgetComponent';
-import { LockClosedIcon} from '@heroicons/react/24/solid';
 import { useRouter, usePathname } from 'next/navigation';
-import { Fragment } from 'react'
-import { Menu, Transition } from '@headlessui/react';
 import {ShareMenu} from '@/components/shareMenu';
 import axios from 'axios';
 import { formatCurrentHonestDoorPrice } from '@/utils';
@@ -22,12 +19,7 @@ export const PropertyDetail = ({getProperty, propertyType, listings}) =>{
     const router = useRouter();
     const pathname = usePathname();
     const [landingImage, setLandingImage] = useState(''); 
-    const [showReportForm, setShowReportForm] = useState(false);
-    const [averageRating, setAverageRating] = useState(0);
-    const [reviewCount, setReviewCount] = useState(0);
     const detailsRef = useRef<any>(null);
-    const reviewsRef = useRef<any>(null);
-    const reportRef = useRef<any>(null);
     const salesHistoryRef = useRef<any>(null);
     const photosRef = useRef<any>(null);
     const nearbyPhotosRef = useRef<any>(null);
@@ -38,13 +30,8 @@ export const PropertyDetail = ({getProperty, propertyType, listings}) =>{
     const schoolProgramsRef = useRef<any>(null);
     const yearConstructed = getProperty.YearConstructed.Value;
     const age = yearConstructed === '0' ? '-' : (new Date().getFullYear() - parseInt(yearConstructed)).toString();
-    const [saved, setSaved] = useState(false);
-    const [liked, setLiked] = useState(false);
-    const [bookmarkCount, setBookmarkCount] = useState(0);
-    const [likedCount, setLikedCount] = useState(0);
     const [newListings, setNewListings] = useState<any>([]);
     const [recentSoldListings, setRecentSoldListings] = useState([]);
-    const [viewCount, setViewCount] = useState(0);
     const [selectedItem, setSelectedItem] = useState(null);
     const [floorPlanDocs, setFloorPlanDocs] = useState<any>([]);
     const [floorPlansCount, setFloorPlansCount] = useState(0);
@@ -55,7 +42,6 @@ export const PropertyDetail = ({getProperty, propertyType, listings}) =>{
     const [HonestDoorURL, setHonestDoorUrl] = useState('');
     const [streetAverage, setStreetAverage] = useState("N/A");
     const [openAccordions, setOpenAccordions] = useState({});
-    const [reviews, setReviews] = useState<any>([]);
     const { isPrinting } = usePrint();
     
     const toggleAccordion = (index) => {
@@ -102,8 +88,8 @@ export const PropertyDetail = ({getProperty, propertyType, listings}) =>{
                 }
             });
         } else {
-            var bucket = 'https://sr-webimages-002.s3.us-west-2.amazonaws.com/strata/'
-            var gisid = getProperty.GISID.Value
+            const bucket = 'https://sr-webimages-002.s3.us-west-2.amazonaws.com/strata/'
+            const gisid = getProperty.GISID.Value
             const cleanedAddress = getProperty.CivicAddress.Value.replace('-', ' ').replace(/[^a-zA-Z0-9\s]/g, '').toLowerCase().split(' ');
             cleanedAddress[2] = cleanedAddress[2][0].toUpperCase() + cleanedAddress[2].slice(1).toLowerCase();
             const address = cleanedAddress[0] + '-' + cleanedAddress[1] + '-' + cleanedAddress[2];

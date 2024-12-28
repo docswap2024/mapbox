@@ -1,37 +1,25 @@
 "use client";
 
 import React, {useEffect, useState, useRef} from 'react'
-import { FaRegClock, FaEye, FaMapMarkerAlt , FaHome, FaTools, FaThermometerFull, FaBed, FaBath, FaVectorSquare, FaParking, FaRulerCombined, FaCheck, FaImage, FaDollarSign, FaEllipsisV, FaCommentAlt, FaExclamationTriangle} from "react-icons/fa";
+import { FaRegClock, FaEye, FaMapMarkerAlt , FaHome, FaTools, FaThermometerFull, FaBed, FaBath, FaVectorSquare, FaParking, FaRulerCombined, FaCheck, FaImage, FaDollarSign} from "react-icons/fa";
 import { LastSold, Photos, NearbyPhotos, BCAssessment, Taxes, SchoolPrograms, FloorPlans } from './helperComponents';
 import { ShareMenu } from '../shareMenu';
 import { useRouter } from 'next/navigation';
-import { Fragment } from 'react'
-import { Menu, Transition } from '@headlessui/react';
 import Image from 'next/image';
 import axios from 'axios';
 import { getBathrooms, formatPrice, formatDate, checkUrl, formatTime } from '@/utils';
 import { usePrint } from '@/context/printContext';
 
 export const ListingDetail = ({getListing, listingType, landingUrl}) => {
-    const router = useRouter();
     const [floorPlanDocs, setFloorPlanDocs] = useState<any>([]);
     const [floorPlansCount, setFloorPlansCount] = useState<number>(0);
-    const [scheduleTourDates, setScheduleTourDates] = useState<any>([]);
     const [viewCount, setViewCount] = useState<number>(0);
     const [selectedImage, setSelectedImage] = useState(null);
     const [enlargedPhotos, setEnlargedPhotos] = useState<any>([]);
     const enlargedCarouselRef = useRef<any>();
     const [selectedSlide, setSelectedSlide] = useState(0);
     const [openhouses, setOpenhouses] = useState<any>([]);
-    const [averageRating, setAverageRating] = useState(0);
-    const [reviewCount, setReviewCount] = useState(0);
-    const [reviews, setReviews] = useState<any>([]);
-    const [showReportForm, setShowReportForm] = useState(false);
-    const reviewsRef = useRef<any>(null);
-    const reportRef = useRef<any>(null);
     const [openAccordions, setOpenAccordions] = useState({});
-    const [bookmarkCount, setBookmarkCount] = useState(0);
-    const [likedCount, setLikedCount] = useState(0);
     const { isPrinting } = usePrint();
 
     const toggleAccordion = (index) => {
@@ -211,58 +199,6 @@ export const ListingDetail = ({getListing, listingType, landingUrl}) => {
     
         fetchFloorPlanDocs();
 
-        const getDates = () => {
-            const dates: any[] = [];
-            const today = new Date();
-        
-            for (let i = 1; i <= 7; i++) {
-              const nextDate = new Date();
-              nextDate.setDate(today.getDate() + i);
-              dates.push(nextDate.toDateString());
-            }
-            setScheduleTourDates(dates);
-            return dates;
-          };
-
-          getDates();
-
-        const getViews = async () => {
-            try{
-                const response = await axios.get(`/api/views/getViews/${getListing.PID.Value}`);
-                const data = await response.data;
-                if (data) {
-                    setViewCount(data.ViewCount);
-                }
-            } catch (error) {
-                console.log(error);
-            }
-        }
-
-        getViews();
-
-        const getReviews = async () => {
-            try{
-                const response = await axios.get(`/api/forms/reviews/getReviewsByID/${getListing.PID.Value}`);
-                let data = await response.data;
-                if (Array.isArray(data) && data.length > 0) {
-                    console.log(data);
-                    data = data.filter(review => review.Approved === 'True');
-                    console.log(data);
-                    setReviews(data);
-                    const totalAvg = data.reduce((sum, review) => sum + review.Avg, 0) / data.length;
-
-                    console.log('Total Average:', totalAvg);
-                    
-                    setAverageRating(totalAvg);
-                    setReviewCount(data.length);
-                }
-            } catch (error) {
-                console.log(error);
-            } 
-        }
-
-        getReviews();
-
         const getOpenhouses = async () => {
             try {
                 const response = await axios.get(`/api/openhouses/getOpenhouses/${getListing.ListingID.Value}`);
@@ -286,35 +222,6 @@ export const ListingDetail = ({getListing, listingType, landingUrl}) => {
         }
 
         getOpenhouses();
-
-        const fetchBookmarkCount = async () => {
-            try {
-                const response = await axios.get(`/api/savedProperties/getSavedPropertyByID/${getListing.PID.Value}`);
-                const data = await response.data;
-                console.log(data);
-                if (Array.isArray(data) && data.length > 0) {
-                    setBookmarkCount(data.length);
-                }
-            } catch (error) {
-                console.log(error);
-            }  
-        }
-
-        fetchBookmarkCount();
-
-        const fetchLikeCount = async () => {
-            try {
-                const response = await axios.get(`/api/likedProperties/getLikedPropertyByID/${getListing.PID.Value}`);
-                const data = await response.data;
-                if (Array.isArray(data) && data.length > 0) {
-                    setLikedCount(data.length);
-                }
-            } catch (error) {
-                console.log(error);
-            }  
-        }
-
-        fetchLikeCount();
 
     }, [])
 

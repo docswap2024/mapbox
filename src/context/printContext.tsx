@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const PrintContext = createContext({
-    handlePrint: (url: string) => {},
+    handlePrint: (_url: string) => {},
     isPrinting: false
 });
 
