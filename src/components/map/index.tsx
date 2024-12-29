@@ -11,7 +11,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import axios from 'axios';
 import { popupStyles } from './styles';  
 import Image from 'next/image';
-import { fetchImage, formatPid, getBathrooms, formatPrice } from '@/utils';
+import { fetchImage, formatPid, getBathrooms, formatPrice, formatString } from '@/utils';
 import MapControls from '../mapControls';
 import StrataMenu from '../strataMenu';
 import { PropertyDetailPopup } from './propertyDetailPopup';
@@ -734,7 +734,8 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
         <MapControls onFlyTo={handleFlyTo} onFlyBack={handleFlyBack} onGetLocation={getLocation} />
 
         <div style={{ display: "none" }} onClick={() => {
-              handleButtonClick();
+              const url = `/property/landing/detached/${encodeURIComponent(getProperty.PID.Value)}/${encodeURIComponent(formatString(getProperty.CivicAddress.Value))}`;
+              window.open(url, "_blank");
         }} >
             <div ref={popupRef}>
                 <style>{popupStyles}</style>
