@@ -1,8 +1,6 @@
 import React from 'react'
 import {PropertyDetailPage} from '@/components/map/propertyDetailPage'
 import axios from 'axios';
-import Head from 'next/head';
-import { formatString } from '@/utils';
 
 interface IndexProps {
   propertyData: any;
@@ -10,58 +8,9 @@ interface IndexProps {
   cardImage: string;
 }
 
-const getPageDescription = (listingData) => {
-  if (listingData){
-    const address = listingData.CivicAddress.Value;
-    const numBathrooms = listingData.Bathrooms.Value;
-    const numBedrooms = listingData.Bedrooms.Value;
-    const floorArea = listingData.FloorArea.Value;
-    const lotSize = listingData.LotSize.Value;
-    const yearConstructed = listingData.YearConstructed.Value;
-    const zoneDesc = listingData.ZoneDesc.Value;
-    const description = `A ${numBedrooms} bedroom, ${numBathrooms} bathroom ${zoneDesc} property at ${address}. Built in ${yearConstructed}, this property has a floor area of ${floorArea} sqft, and a lot size of ${lotSize} sqft.`
-    return description;
-  }
-}
-
-const getOGPageDescription = (listingData) => {
-  if (listingData){
-    const address = listingData.CivicAddress.Value;
-    const numBathrooms = listingData.Bathrooms.Value;
-    const numBedrooms = listingData.Bedrooms.Value;
-    const floorArea = listingData.FloorArea.Value;
-    const lotSize = listingData.LotSize.Value;
-    const yearConstructed = listingData.YearConstructed.Value;
-    const zoneDesc = listingData.ZoneDesc.Value;
-    const description = `A ${numBedrooms} bedroom, ${numBathrooms} bathroom ${zoneDesc} property at ${address}. Built in ${yearConstructed}, this property has a floor area of ${floorArea} sqft, and a lot size of ${lotSize} sqft.`
-    const concatString = description.length > 200 ? description.substring(0, 197) + '...' : description;
-    return concatString;
-  }
-}
-
-
 const Index =  ({ propertyData, allDetachedListings, cardImage}: IndexProps) => {
   return (
     <>
-      <Head>
-        {propertyData && (
-          <>
-            <title>{propertyData.CivicAddress.Value ?? 'Detached Property'}</title>
-            <meta name="description" content={getPageDescription(propertyData) ?? ''} />
-            <meta property="og:url" content={`https://squamish.realestate//property/landing/detached/${propertyData.PID.Value}/${formatString(propertyData.CivicAddress.Value)}`} />
-            <meta property="og:type" content="website" />
-            <meta property="og:title" content={propertyData.CivicAddress.Value ?? 'Detached Property'} />
-            <meta property="og:description" content={getOGPageDescription(propertyData) ?? ''} />
-            <meta property="og:image" content={cardImage ?? ''} />
-            <meta name="twitter:card" content="summary_large_image" />
-            <meta property="twitter:domain" content="squamish.realestate" />
-            <meta property="twitter:url"  content={`https://squamish.realestate//property/landing/detached/${propertyData.PID.Value}/${formatString(propertyData.CivicAddress.Value)}`} />
-            <meta name="twitter:title" content={propertyData.CivicAddress.Value ?? 'Detached Property'} />
-            <meta name="twitter:description"  content={getOGPageDescription(propertyData) ?? ''} />
-            <meta name="twitter:image"  content={cardImage ?? ''} />
-          </>
-        )}
-      </Head>
       {
         propertyData && <PropertyDetailPage getProperty={propertyData} propertyType='detached' listings={allDetachedListings}/>
       }
