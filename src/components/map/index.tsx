@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import mapboxgl, { LngLatLike } from 'mapbox-gl';
 import React, { useEffect, useState, useRef } from 'react';
@@ -100,15 +100,17 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
     ];
 
     const handleFlyTo = () => {
-        if (center_index === 13) {
-          center_index = 0;
-        } else {
-          center_index++;
-        }
-    
+      if (center_index === 13) {
+        center_index = 0;
+      } else {
+        center_index++;
+      }
+
+      if (map) {
         map.flyTo({
           center: centres[center_index]
         });
+      }
     };
     
     const handleFlyBack = () => {
@@ -118,9 +120,12 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
         center_index--;
     }
 
+    if (map) {
+
     map.flyTo({
         center: centres[center_index]
     });
+    }
     };
 
     const getLocation = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -136,11 +141,13 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
       
         const marker = new mapboxgl.Marker()
           .setLngLat([longitude, latitude])
-          .addTo(map);
+          .addTo(map!);
       
+          if (map) {
         map.flyTo({
           center: [longitude, latitude],
         });
+      }
     }
 
     const getPopUp = (data: any) => {
@@ -160,8 +167,8 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
             .remove()
             .setLngLat([data.Longitude.Value, data.Latitude.Value])
             .setMaxWidth("100px")
-            .setDOMContent(popupRef.current)   
-            .addTo(map);
+            .setDOMContent(popupRef.current!)   
+            .addTo(map!);
     }
 
     const getStrataPopUp = async (data: any) => {
@@ -190,8 +197,8 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
             .remove()
             .setLngLat([data.Longitude.Value, data.Latitude.Value])
             .setMaxWidth("100px")
-            .setDOMContent(strataPopupRef.current)   
-            .addTo(map);
+            .setDOMContent(strataPopupRef.current!)   
+            .addTo(map!);
     }
     const getPropertyData = async (pid: string, propertyType: 'strata' | 'detached') => {
         const formattedPid = formatPid(pid);
@@ -315,8 +322,8 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
       new mapboxgl.Popup({ offset: popupOffsets, className: 'mapboxgl-popup' })
         .setLngLat([listing.Longitude.Value, listing.Latitude.Value])
         .setMaxWidth("100px")
-        .setDOMContent(popupRef.current)
-        .addTo(map);
+        .setDOMContent(popupRef.current!)
+        .addTo(map!);
     };
 
     const addClickListener = (el, listing, listingType) => {
@@ -413,7 +420,7 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
         if (selectedStatuses.includes(listing.Status.Value)) {
           const markerEl = createMarkerElement(listing.Status.Value, listingType);
           addClickListener(markerEl, listing, listingType);
-          new mapboxgl.Marker(markerEl).setLngLat([coordinate.longitude, coordinate.latitude]).addTo(map);
+          new mapboxgl.Marker(markerEl).setLngLat([coordinate.longitude, coordinate.latitude]).addTo(map!);
         }
       });
     };
@@ -434,7 +441,7 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
         if (selectedStatuses.includes(listings[0].Status.Value)) {
           const markerEl = createMarkerElement(listings[0].Status.Value, listingType);
           addStrataClickListener(markerEl, listings, listingType);
-          new mapboxgl.Marker(markerEl).setLngLat([longitude, latitude]).addTo(map);
+          new mapboxgl.Marker(markerEl).setLngLat([longitude, latitude]).addTo(map!);
         }
       });
     };
@@ -484,13 +491,13 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
       });     
   
       const addDataLayer = () => {
-          map.addSource('property-parcels', {
+          map?.addSource('property-parcels', {
             type: 'vector',
             url: 'mapbox://nmandiveyi.952g6rwo',
             hover: true,
           })
     
-          map.addSource('points', {
+          map?.addSource('points', {
             'type': 'geojson',
             'data': {
             'type': 'FeatureCollection',
@@ -577,7 +584,7 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
             }
             });
     
-          map.addLayer({
+          map?.addLayer({
             'id': 'parcel-outline',
             'type': 'line',
             'source': 'property-parcels',
@@ -593,7 +600,7 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
             }, 
             });
     
-          map.addLayer({
+          map?.addLayer({
           'id': 'parcels-fill',
           'type': 'fill',
           'source': 'property-parcels',
@@ -607,7 +614,7 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
           }
           });
     
-          map.addLayer(
+          map?.addLayer(
             {
             'id': 'houses-highlighted',
             'type': 'line',
@@ -671,9 +678,9 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
 
       map.on('click', 'parcels-fill', function (e) {
         
-        const raw_pid = e.features[0].properties.PID;
-        
-        if(e.features[0].properties.CLASS === 'Building Strata') {
+        if (e.features && e.features[0] && e.features[0].properties) {
+          const raw_pid = e.features[0].properties.PID;
+          if(e.features[0].properties.CLASS === 'Building Strata') {
             getPropertyData(raw_pid, 'strata');
             setPropertyType('strata');
         } else {
@@ -681,29 +688,38 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
             setPropertyType('detached');
         }
             
-        var feature = map.queryRenderedFeatures(e.point, {
+        var feature = map?.queryRenderedFeatures(e.point, {
           layers: ['parcels-fill']
         });
 
-        var filter = feature.reduce(
+        var filter = feature?.reduce(
           function (memo, feature) {
-            memo.push(feature.properties.OBJECTID);
+            if (feature?.properties) {
+              memo.push(feature.properties.OBJECTID);
+            }
             return memo;
             },
             ['in', 'OBJECTID']
             );
           
-          map.setFilter('houses-highlighted', filter);
+          map?.setFilter('houses-highlighted', filter);
+        }
+        
+        
       });
 
       // Change the cursor to a pointer when the mouse is over the states layer.
       map.on('mouseenter', 'parcels-fill', function () {
-        map.getCanvas().style.cursor = 'pointer';
+        if (map) {
+          map.getCanvas().style.cursor = 'pointer';
+        }
       });
 
       // Change it back to a pointer when it leaves.
       map.on('mouseleave', 'parcels-fill', function () {
-          map.getCanvas().style.cursor = '';
+          if (map) {
+            map.getCanvas().style.cursor = '';
+          }
       });
 
 
