@@ -7,7 +7,7 @@ import { ListingDetail } from './listingDetail';
 import { useRouter } from 'next/navigation';
 import { formatString } from '@/utils';
 
-export const ListingDetailPopup = ({showListingDetails, setShowListingDetails, getListing, listingType}) =>{
+export const ListingDetailPopup = ({showListingDetails, setShowListingDetails, getListing, listingType, listings}) =>{
     const router = useRouter();
     const [landingUrl, setLandingUrl] = useState<string>('');
 
@@ -46,7 +46,7 @@ export const ListingDetailPopup = ({showListingDetails, setShowListingDetails, g
                     <FaWindowClose className='h-6 w-6 flex-none bg-brandDark text-white hover:bg-white hover:text-brandDark' onClick={() => setShowListingDetails(false)} />
                 </div>
             </div>
-            <ListingDetail getListing={getListing}  listingType={listingType} landingUrl={landingUrl}/>
+            <ListingDetail getListing={getListing}  listingType={listingType} landingUrl={landingUrl} listings={listings}/>
         </div>
     )
 } 

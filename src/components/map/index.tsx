@@ -16,13 +16,18 @@ import MapControls from '../mapControls';
 import StrataMenu from '../strataMenu';
 import { PropertyDetailPopup } from './propertyDetailPopup';
 import { ListingDetailPopup } from './listingDetailPopup';
+import { AccessDeniedPopup } from './accessDeniedPopup';
+import { getCurrentUser } from '@/lib/utils/session';
+import { useCustomContext } from '@/context/useState';
+import { Navbar } from '../navbar';
+import { UserPortal } from '../userPortal';
+import { FaFilter } from "react-icons/fa";
 
 interface MapboxMapProps {
     accessToken: string; // Mapbox access token
     style?: string; // Map style
     center?: [number, number]; // Initial center [lng, lat]
     zoom?: number; // Initial zoom level
-    markers?: Array<{ lng: number; lat: number; popupText?: string }>; // Markers with optional popups
     height?: string; // Map height (e.g., '400px')
     width?: string; // Map width (e.g., '100%')
 }
@@ -35,7 +40,6 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
     style = 'mapbox://styles/nmandiveyi/ckwmqtgv305f514mnn23k7yax',
     center = [-123.152797, 49.699331],
     zoom = 16,
-    markers = [],
     height = '400px',
     width = '100%',
   }) => {
@@ -67,8 +71,31 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
     const [landListing, setLandListing] = useState<any>(null);
     const [listingType, setListingType] = useState<any>(null);
     const [getStrataListings, setStrataListings] = useState<any>([]);
+    const [showAccessDenied, setShowAccessDenied] = useState<any>(null);
+    const [showPortal, setShowPortal] = useState<any>(null);
+    const { currentUser, setCurrentUser } = useCustomContext(); 
+    const filterButtonRef = useRef<HTMLButtonElement>(null);
+    const [isFiltersVisible, setIsFiltersVisible] = useState(false);
+    const markersRef = useRef<any[]>([]);
 
-    const selectedStatuses = ['Active', 'Active Under Contract'];
+    const statusMap = {
+      Sold: 'Closed',
+      Pending: 'Pending',
+      Expired: 'Expired',
+      Cancelled: 'Terminated',
+    }
+    const [selectedStatuses, setSelectedStatuses] = useState<string[]>(['Active', 'Active Under Contract', 'Closed']);
+
+     // Handle checkbox changes
+     const handleCheckboxChange = (status: string) => {
+      setSelectedStatuses(prevStatuses =>
+        prevStatuses.includes(status)
+          ? prevStatuses.filter(item => item !== status)
+          : [...prevStatuses, status]
+      );
+    };
+
+    // const selectedStatuses = ['Active', 'Active Under Contract', 'Closed'];
 
     var markerHeight = 50, markerRadius = 10, linearOffset = 25;
     var popupOffsets: mapboxgl.PopupOptions['offset'] = {
@@ -353,6 +380,12 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
               setCardImage(result);
             });
           }
+          const isAccessDenied = !currentUser && !['Active', 'Active Under Contract'].includes(fetchedListing.Status.Value);
+          console.log(isAccessDenied);
+          if (isAccessDenied) {
+            setShowAccessDenied(true);
+            return;
+          }
     
           setListingType(listingType + "Listing");
           if (listingType === 'strata') {
@@ -396,7 +429,12 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
     
             try {
               const strataListingsData = await getMultipleListings(listings);
-              const filteredListings = strataListingsData.filter(listing => ['Activ'].includes(listing.Status.Value));
+              const isAccessDenied = !currentUser && strataListingsData.some(listing => !['Active', 'Active Under Contract'].includes(listing.Status.Value));
+              if (isAccessDenied) {
+                setShowAccessDenied(true);
+                return;
+              }
+              const filteredListings = strataListingsData.filter(listing => selectedStatuses.includes(listing.Status.Value));
               setStrataListings(filteredListings);
               setListingType('strataListing');
               const StrataBucket = 'https://sr-webimages-002.s3.us-west-2.amazonaws.com/strata/';
@@ -420,7 +458,8 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
         if (selectedStatuses.includes(listing.Status.Value)) {
           const markerEl = createMarkerElement(listing.Status.Value, listingType);
           addClickListener(markerEl, listing, listingType);
-          new mapboxgl.Marker(markerEl).setLngLat([coordinate.longitude, coordinate.latitude]).addTo(map!);
+          const marker =  new mapboxgl.Marker(markerEl).setLngLat([coordinate.longitude, coordinate.latitude]).addTo(map!);
+          markersRef.current.push({ marker, status: listing.Status.Value });
         }
       });
     };
@@ -441,12 +480,21 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
         if (selectedStatuses.includes(listings[0].Status.Value)) {
           const markerEl = createMarkerElement(listings[0].Status.Value, listingType);
           addStrataClickListener(markerEl, listings, listingType);
-          new mapboxgl.Marker(markerEl).setLngLat([longitude, latitude]).addTo(map!);
+          const marker = new mapboxgl.Marker(markerEl).setLngLat([longitude, latitude]).addTo(map!);
+          markersRef.current.push({ marker, status: listings[0].Status.Value });
         }
       });
     };
 
     const addMarkers = async () => {
+      markersRef.current = markersRef.current.filter(({ marker, status }) => {
+        if (!selectedStatuses.includes(status)) {
+          marker.remove(); // Remove from map
+          return false; // Exclude from the updated markersRef
+        }
+        return true; // Keep if status is in selectedStatuses
+      });
+
      if (allDetachedListingsCoordinates && allDetachedListings) {
         console.log('Adding detached markers');
         await addListingsToMap({coordinates: allDetachedListingsCoordinates, filteredData: allDetachedListings}, 'detached');
@@ -474,10 +522,25 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
     setShowPropertyDetails(false);
     setShowListingDetails(true);
   }
+
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        const user = await getCurrentUser();
+        setCurrentUser(user);
+        console.log(user);
+      } catch (error) {
+        return null;
+      }
+    }
+
+    getUser();
+
+  }, [])
     
     useEffect(() => {
       if (map) return; 
-  
+
       mapboxgl.accessToken = accessToken;
   
       map = new mapboxgl.Map({
@@ -734,10 +797,12 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
         console.log('Adding markers');
         addMarkers();
       }
-    }, [allDetachedListings, allMultifamilyListings, allStrataListings, allLandListings]);
+    }, [selectedStatuses, allDetachedListings, allMultifamilyListings, allStrataListings, allLandListings, currentUser]);
   
   
     return (
+      <>
+      <Navbar />
       <div style={{ position: 'relative', zIndex: 1 }}>
         <div
           id="map"
@@ -746,7 +811,50 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
             width,
           }}
         />
-        
+          <div className="absolute top-2 left-2 z-10">
+          <button
+            ref={filterButtonRef}
+            onClick={() => setIsFiltersVisible(!isFiltersVisible)}
+            className="flex items-center px-4 py-[15px] md:px-3 md:py-2 mt-1 rounded-sm shadow-sm bg-white text-[#9ca3af] font-sans text-opacity-80 hover:bg-graybg transition-colors duration-200"
+          >
+            <FaFilter className='w-5 h-5 md:w-3 md:h-3 md:mr-2 text-[#757575]' />
+            <span className='hidden md:block text-sm'>Listing Filter</span>
+          </button>
+
+            {isFiltersVisible && (
+              <div
+                id="status-filters"
+                className="flex flex-col gap-2 p-4 mt-2 bg-white rounded-lg shadow-lg absolute top-full left-0 z-10"
+              >
+                 {
+                  Object.entries(statusMap).map(([key, value]) => {
+                    console.log(`Key: ${key}, Value: ${value}`);
+                    return (
+                      <label
+                        key={value}
+                        className="flex items-center justify-between cursor-pointer"
+                      >
+                        <span className="capitalize mr-2 text-sm text-black font-sans">{key}</span>
+                        <div className="relative">
+                          <input
+                            type="checkbox"
+                            checked={selectedStatuses.includes(value)}
+                            onChange={() => handleCheckboxChange(value)}
+                            className="sr-only peer"
+                          />
+                          <div className="w-9 h-5 bg-[#d1d5db] rounded-full peer-checked:bg-brand transition-colors duration-200"></div>
+                          <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transform transition-transform duration-200 peer-checked:translate-x-4"></div>
+                        </div>
+                      </label>
+                    )
+                  })
+                 }
+              </div>
+            )}
+          </div>
+
+
+            
         <MapControls onFlyTo={handleFlyTo} onFlyBack={handleFlyBack} onGetLocation={getLocation} />
 
         <div style={{ display: "none" }} onClick={() => {
@@ -782,13 +890,14 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
                 {cardImage && <Image src={cardImage} alt="" width={1000} height={600}></Image>}
                 <div className="bottom-left"></div>
                 </div>
-                <StrataMenu strataProperties={getStrataProperties} setProperty={setStrataProperty} handleButtonClick={handleButtonClick}/>
+                <StrataMenu strataProperties={getStrataProperties} type="property"/>
             </div>
         </div> 
 
         <div style={{ display: "none" }} onClick={() => {
-             handleListingButtonClick();
-          }}>
+              const url = `/listing/landing/detached/${encodeURIComponent(detachedListing.PID.Value)}/${encodeURIComponent(formatString(detachedListing.CivicAddress.Value))}`;
+              window.open(url, "_blank");
+        }}>
             <div ref={detachedListingPopupRef}>
               <style>{popupStyles}</style>
               <div className="detached-card">
@@ -813,8 +922,9 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
         </div> 
 
         <div style={{ display: "none" }} onClick={() => {
-            handleListingButtonClick();
-          }}>
+              const url = `/listing/landing/strata/${encodeURIComponent(strataListing.PID.Value)}/${encodeURIComponent(formatString(strataListing.CivicAddress.Value))}`;
+              window.open(url, "_blank");
+        }}>
               <div ref={strataListingPopupRef}>
                 <style>{popupStyles}</style>
                 <div className="detached-card">
@@ -845,12 +955,13 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
             {cardImage && <Image src={cardImage} alt="" width={1000} height={600}></Image>}
               <div className="bottom-left"></div>
             </div>
-            <StrataMenu strataProperties={getStrataListings} setProperty={setStrataListing} handleButtonClick={handleListingButtonClick} />
+            <StrataMenu strataProperties={getStrataListings} type="listing" />
           </div>
         </div>
 
-        <div style={{ display: "none" }} onClick={()=> {
-          handleListingButtonClick();
+        <div style={{ display: "none" }} onClick={() => {
+              const url = `/listing/landing/land/${encodeURIComponent(landListing.PID.Value)}/${encodeURIComponent(formatString(landListing.CivicAddress.Value))}`;
+              window.open(url, "_blank");
         }}>
           <div ref={landListingPopupRef}>
               <style>{popupStyles}</style>
@@ -877,8 +988,9 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
         </div> 
 
         <div style={{ display: "none" }} onClick={() => {
-          handleListingButtonClick();
-          }}>
+              const url = `/listing/landing/multifamily/${encodeURIComponent(multifamilyListing.PID.Value)}/${encodeURIComponent(formatString(multifamilyListing.CivicAddress.Value))}`;
+              window.open(url, "_blank");
+        }}>
             <div ref={multifamilyListingPopupRef}>
               <style>{popupStyles}</style>
               <div className="detached-card">
@@ -901,65 +1013,18 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
               </div>
             </div>
         </div> 
-
-        {showPropertyDetails && propertyType === 'detached' && (
-              <PropertyDetailPopup
-                showPropertyDetails={showPropertyDetails}
-                setShowPropertyDetails={setShowPropertyDetails}
-                getProperty={getProperty}
-                propertyType={propertyType}
-                listings={allDetachedListings}
+          {
+            showAccessDenied && (
+              <AccessDeniedPopup
+                setShowAccessDenied={setShowAccessDenied}
+                setShowPortal={setShowPortal} 
               />
-          )}
+            )
+          }
 
-        {showPropertyDetails && propertyType === 'strata' && (
-              <PropertyDetailPopup
-                showPropertyDetails={showPropertyDetails}
-                setShowPropertyDetails={setShowPropertyDetails}
-                getProperty={getStrataProperty}
-                propertyType={propertyType}
-                listings={allStrataListings}
-
-              />
-        )}
-
-        {showListingDetails && listingType === 'detachedListing' && (
-              <ListingDetailPopup
-                showListingDetails={showListingDetails}
-                setShowListingDetails={setShowListingDetails}
-                getListing={detachedListing}
-                listingType={listingType}
-              />
-        )}
-
-        {showListingDetails && listingType === 'landListing' && (
-              <ListingDetailPopup
-                showListingDetails={showListingDetails}
-                setShowListingDetails={setShowListingDetails}
-                getListing={landListing}
-                listingType={listingType}
-              />
-        )}
-
-        {showListingDetails && listingType === 'strataListing' && (
-              <ListingDetailPopup
-                showListingDetails={showListingDetails}
-                setShowListingDetails={setShowListingDetails}
-                getListing={strataListing}
-                listingType={listingType}
-              />
-          )}
-
-          {showListingDetails && listingType === 'multifamilyListing' && (
-            <ListingDetailPopup
-              showListingDetails={showListingDetails}
-              setShowListingDetails={setShowListingDetails}
-              getListing={multifamilyListing}
-              listingType={listingType}
-            />
-          )}
- 
+          {showPortal && <UserPortal setShowPortal={setShowPortal} />}
       </div>
+      </>
     );
 };
 

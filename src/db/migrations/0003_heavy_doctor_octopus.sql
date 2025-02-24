@@ -1,0 +1,2 @@
+ALTER TABLE "user" RENAME COLUMN "apiKey" TO "api_key";--> statement-breakpoint
+ALTER TABLE "user" ADD CONSTRAINT "user_api_key_websiteOwner_apiKey_fk" FOREIGN KEY ("api_key") REFERENCES "public"."websiteOwner"("apiKey") ON DELETE cascade ON UPDATE cascade;

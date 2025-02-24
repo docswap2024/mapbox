@@ -2,15 +2,15 @@ import React, { Fragment } from 'react';
 import { Menu, Transition, MenuButton, MenuItems, MenuItem } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/24/solid';
 import { sliceAddress } from '@/utils';
+import { formatString } from '@/utils';
 
 
 interface StrataMenuProps {
     strataProperties: Array<any>; // Replace `any` with the appropriate type for a property
-    setProperty: (property: any) => void; // Replace `any` with the appropriate type for a property
-    handleButtonClick: () => void;
+    type: string; // Replace `any` with the appropriate type for a property
 }
 
-const StrataMenu: React.FC<StrataMenuProps> = ({ strataProperties, setProperty, handleButtonClick }) => (
+const StrataMenu: React.FC<StrataMenuProps> = ({ strataProperties, type }) => (
     <Menu as="div" className="relative inline-block text-left w-full">
         <div>
             <MenuButton className="inline-flex flex justify-between w-full rounded-md bg-white px-3 py-2 text-sm font-semibold text-brandDarker shadow-sm ring-1 ring-inset ring-grayLight hover:bg-grayLight">
@@ -42,9 +42,8 @@ const StrataMenu: React.FC<StrataMenuProps> = ({ strataProperties, setProperty, 
                         <div
                             className=' data-[focus]:bg-grayLight  data-[focus]:text-gray text-brandDarker block px-4 py-2 text-sm '
                             onClick={() => {
-                            handleButtonClick();
-                            // addView(property.PID.Value)
-                            setProperty(property);
+                                const url = `/${type}/landing/strata/${encodeURIComponent(property.PID.Value)}/${encodeURIComponent(formatString(property.CivicAddress.Value))}`;
+                                window.open(url, "_blank");
                             }}
                         >
                             {sliceAddress(property.CivicAddress.Value)}

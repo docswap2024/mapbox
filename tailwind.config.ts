@@ -14,7 +14,9 @@ export default {
         aqua: '#0ec6d5',
         brandDarker: '#2e3f6e',
         brandDark: '#3d528b',
+        brand: '#4DB7FE',
         gray: '#566985',
+        grayborder: '#eee',
         grayLight: '#F6F6F6',
         orange: '#ff6935',
         red: {

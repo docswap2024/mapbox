@@ -1,0 +1,1 @@
+ALTER TABLE "offer" DROP CONSTRAINT "offer_email_unique";

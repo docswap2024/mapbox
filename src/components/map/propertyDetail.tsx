@@ -1,17 +1,20 @@
 "use client";
 
 import Image from 'next/image';
-import React, {useState, useRef, useEffect} from 'react';
+import React, {useState, useRef, useEffect, Fragment} from 'react';
 import {styles} from './propertyDetailsStyle';
-import {Tabs, Tab, LastSold, Photos, NearbyPhotos, BCAssessment, Taxes, SchoolPrograms, NewListings, RecentSolds, FloorPlans, HonestDoorPriceChart} from './helperComponents';
-import {FaArrowLeft, FaBed, FaBath, FaArrowsAlt, FaClock, FaLandmark, FaDollarSign, FaRegChartBar, FaCommentDollar, FaBriefcase, FaHome, FaInfo, FaImage, FaChartLine, FaSchool, FaMoneyCheckAlt } from 'react-icons/fa';
+import {Tabs, Tab, LastSold, Photos, NearbyPhotos, BCAssessment, Taxes, SchoolPrograms, NewListings, RecentSolds, FloorPlans, HonestDoorPriceChart, ReportIssue, Reviews, ReviewForm, PropertyReviews} from './helperComponents';
+import {FaArrowLeft, FaBed, FaBath, FaArrowsAlt, FaClock, FaLandmark, FaDollarSign, FaRegChartBar, FaCommentDollar, FaBriefcase, FaHome, FaInfo, FaImage, FaChartLine, FaSchool, FaMoneyCheckAlt, FaEllipsisV, FaCommentAlt, FaExclamationTriangle } from 'react-icons/fa';
 import HDWidgetComponent from './HDWidgetComponent';
+import { Menu, Transition } from '@headlessui/react';
 import HDMyHomeWidgetComponent from './HDMyHomeWidgetComponent';
 import { useRouter, usePathname } from 'next/navigation';
 import {ShareMenu} from '@/components/shareMenu';
 import axios from 'axios';
 import { formatCurrentHonestDoorPrice } from '@/utils';
+import { CompleteUser } from '@/db/schema';
 import { formatString } from '@/utils';
+import { me } from '@/db/server/actions/user.action';
 import {checkUrl} from '@/utils/';
 import { usePrint } from '@/context/printContext';
 
@@ -27,9 +30,12 @@ export const PropertyDetail = ({getProperty, propertyType, listings}) =>{
     const floorPlansRef = useRef<any>(null);
     const bcAssessmentRef = useRef<any>(null);
     const taxesRef = useRef<any>(null);
+    const reportRef = useRef<any>(null);
     const schoolProgramsRef = useRef<any>(null);
     const yearConstructed = getProperty.YearConstructed.Value;
     const age = yearConstructed === '0' ? '-' : (new Date().getFullYear() - parseInt(yearConstructed)).toString();
+    const [currentUserDetails, setCurrentUserDetails] = useState<CompleteUser | null>();
+    const [showReportForm, setShowReportForm] = useState(false);
     const [newListings, setNewListings] = useState<any>([]);
     const [recentSoldListings, setRecentSoldListings] = useState([]);
     const [selectedItem, setSelectedItem] = useState(null);
@@ -42,7 +48,12 @@ export const PropertyDetail = ({getProperty, propertyType, listings}) =>{
     const [HonestDoorURL, setHonestDoorUrl] = useState('');
     const [streetAverage, setStreetAverage] = useState("N/A");
     const [openAccordions, setOpenAccordions] = useState({});
+    const [reviews, setReviews] = useState<any>([]);
+    const [averageRating, setAverageRating] = useState(0);
+    const [reviewCount, setReviewCount] = useState(0);
     const { isPrinting } = usePrint();
+    const reviewsRef = useRef<any>(null);
+    
     
     const toggleAccordion = (index) => {
         setOpenAccordions((prevState) => ({
@@ -269,6 +280,37 @@ export const PropertyDetail = ({getProperty, propertyType, listings}) =>{
         }
 
         fetchStreetAverage();
+
+        const getUserDetails = async () => {
+            const user = await me();
+            setCurrentUserDetails(user);
+        }
+        
+        getUserDetails();
+
+        const getReviews = async () => {
+            try{
+                const response = await axios.get(`/api/forms/reviews/getReviewsByID/${getProperty.PID.Value}`);
+                let data = await response.data;
+                if (data) {
+                    console.log(data);
+                    data = data.filter(review => review.Approved === 'True');
+                    setReviews(data);
+                    
+                    const totalAvg = data.reduce((sum, review) => sum + review.Avg, 0) / data.length;
+
+                    console.log('Total Average:', totalAvg);
+                    
+                    setAverageRating(totalAvg);
+                    setReviewCount(data.length);
+                }
+            } catch (error) {
+                console.log(error);
+            } 
+        }
+
+        getReviews();
+        
     }, [])
 
     const numberWithCommas = (input: string | number) => {
@@ -404,11 +446,60 @@ export const PropertyDetail = ({getProperty, propertyType, listings}) =>{
                         )}
                     
                 </div>
+                <div className={styles.detailContainer}>
+                    {
+                        reviewCount == 0 ? (
+                            <></>
+                        ) : (
+                        <div className={styles.reviewsContainer}>
+                            <Reviews averageRating={averageRating} reviewCount={reviewCount}/>
+                         </div>
+                        )
+                    }
+                </div>
                 
             </div>
             <div className='relative bg-grayLight p-2 flex'>
                 <div className={styles.buttonGroup}>
-                    <ShareMenu url={`https://squamish.realestate/property/landing/detached/${encodeURIComponent(getProperty.PID.Value)}/${encodeURIComponent(formatString(getProperty.CivicAddress.Value))}`} />
+                    <ShareMenu url={`https://squamish.realestate/property/landing/${propertyType}/${encodeURIComponent(getProperty.PID.Value)}/${encodeURIComponent(formatString(getProperty.CivicAddress.Value))}`} />
+                    <Menu as="div" className={`inline-block text-left`}>
+                        <div>
+                            <Menu.Button className={`inline-flex w-full justify-center gap-x-1.5 ${styles.buttonAction}`}>
+                            <span className={styles.buttonActionText}>More</span>
+                            <FaEllipsisV className="-mr-1 h-5 w-5 text-brand" aria-hidden="true" />
+                            </Menu.Button>
+                        </div>
+                        <Transition
+                            as={Fragment}
+                            enter="transition ease-out duration-100"
+                            enterFrom="transform opacity-0 scale-95"
+                            enterTo="transform opacity-100 scale-100"
+                            leave="transition ease-in duration-75"
+                            leaveFrom="transform opacity-100 scale-100"
+                            leaveTo="transform opacity-0 scale-95"
+                        >
+                            <Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                            <div className="py-1">
+                                <Menu.Item>
+                                    {({ active }) => (
+                                        <div className={classNames(active ? 'bg-grayLight text-brandDarker' : 'text-brandDarker', 'flex items-center px-4 py-2 text-sm')} onClick={() => scrollToRef(reviewsRef, '')}>
+                                        <FaCommentAlt  className="mr-2" />
+                                        Write a Review
+                                        </div>
+                                    )}
+                                </Menu.Item>
+                                <Menu.Item>
+                                    {({ active }) => (
+                                        <div className={classNames(active ? 'bg-grayLight text-brandDarker' : 'text-brandDarker', 'flex items-center px-4 py-2 text-sm')}   onClick={() => { setShowReportForm(true); scrollToRef(reportRef, ''); }}>
+                                        <FaExclamationTriangle className="mr-2" />
+                                        Report
+                                        </div>
+                                    )}
+                                </Menu.Item>
+                            </div>
+                            </Menu.Items>
+                        </Transition>
+                    </Menu>
                 </div>
             </div>
             <div className='bg-grayLight p-6 pt-10 text-xs md:text-sm lg:text-md lg:flex' >
@@ -510,6 +601,23 @@ export const PropertyDetail = ({getProperty, propertyType, listings}) =>{
                             ))
                         }
                     </div>
+                    <div className='bg-white shadow-md text-[#666666] font-medium mb-5'>
+                        <div className='p-4 font-semibold border-b border-grayLight'>
+                        Reviews ({reviews?.filter(review => review.Approved === 'True').length || 0})
+
+                        </div>
+                        {   
+                        
+                            reviews && <PropertyReviews reviews={reviews} getProperty={getProperty} propertyType={propertyType}/> 
+                        }
+
+                    </div>
+                    <div ref={reviewsRef} className='bg-white shadow-md text-[#666666] font-medium mb-5'>
+                        <div className='p-4 font-semibold border-b border-grayLight'>
+                            Add Property Review
+                        </div>
+                        <ReviewForm getProperty={getProperty} user={currentUserDetails} />
+                    </div>
                 </div>
                 <div className='lg:w-1/3'>
                     <div className='p-2 flex justify-center mb-5'>
@@ -523,6 +631,7 @@ export const PropertyDetail = ({getProperty, propertyType, listings}) =>{
                     <div className='bg-white shadow-md flex justify-center p-5 mb-5'>
                         <HDWidgetComponent />
                     </div>
+                    <ReportIssue user={currentUserDetails} getProperty={getProperty} showReportForm={showReportForm} setShowReportForm={setShowReportForm} reportRef={reportRef}/>
             </div>
             </div>
         </div>
