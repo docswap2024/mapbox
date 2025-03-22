@@ -15,8 +15,7 @@ export const Navbar = () => {
         const getUser = async () => {
           try {
             const user = await getCurrentUser();
-            setCurrentUser(user);
-            console.log(user);
+            setCurrentUser(user)
           } catch (error) {
             return null;
           }

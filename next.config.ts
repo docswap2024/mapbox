@@ -9,7 +9,8 @@ const nextConfig: NextConfig = {
       'maps.googleapis.com',
       'cdnparap130.paragonrels.com'
     ],
-},
+  }
 };
+
 
 export default nextConfig;

@@ -78,7 +78,11 @@ export const AuthService = {
     
         const session = await lucia.createSession(userId, {});
         const sessionCookie = lucia.createSessionCookie(session.id);
-        (await cookies()).set(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);
+        (await cookies()).set(sessionCookie.name, sessionCookie.value, {
+            ...sessionCookie.attributes,
+            sameSite: "none" as const,
+            secure: true,
+        });
 
         return { ok: true };
     },
@@ -108,7 +112,11 @@ export const AuthService = {
 
         const session = await lucia.createSession(existingUser.id, {});
         const sessionCookie = lucia.createSessionCookie(session.id);
-        (await cookies()).set(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);
+        (await cookies()).set(sessionCookie.name, sessionCookie.value, {
+            ...sessionCookie.attributes,
+            sameSite: "none" as const,
+            secure: true,
+        });
 
         return { ok: true };
     },
@@ -124,7 +132,11 @@ export const AuthService = {
         await lucia.invalidateSession(session.id);
 
         const sessionCookie = lucia.createBlankSessionCookie();
-        (await cookies()).set(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);
+        (await cookies()).set(sessionCookie.name, sessionCookie.value, {
+            ...sessionCookie.attributes,
+            sameSite: "none" as const,
+            secure: true,
+        });
 
         return { ok: true };
         // return redirect("/login");
